@@ -2,7 +2,7 @@
 
 #include <fstream>
 #include <cmath>
-#include "json/json.h"
+#include "jsoncpp/json/json.h"
 
 lsstParameters::lsstParameters(const std::string filename){
   Json::Value root;
@@ -137,7 +137,7 @@ std::vector<double> calculateRhalf(const std::string filename){
 }
 
 
-std::vector<BaseProfile*> createProfilesFromInput(const std::string filename,double pixSizePhys){
+std::vector<gerlumph::BaseProfile*> createProfilesFromInput(const std::string filename,double pixSizePhys){
   Json::Value root;
   std::ifstream fin(filename);
   fin >> root;
@@ -147,7 +147,7 @@ std::vector<BaseProfile*> createProfilesFromInput(const std::string filename,dou
   double incl   = root["profile"]["incl"].asDouble();
   double orient = root["profile"]["orient"].asDouble();
   Json::Value lrest  = root["lrest"];
-  std::vector<BaseProfile*> profiles(lrest.size());
+  std::vector<gerlumph::BaseProfile*> profiles(lrest.size());
 
   if( profile_type != "custom" ){
     if( profile_type == "parametric" ){
@@ -155,10 +155,10 @@ std::vector<BaseProfile*> createProfilesFromInput(const std::string filename,dou
 	double l = lrest[j].asDouble();
 	double rhalf = root["profile"]["r0"].asDouble()*pow(l/root["profile"]["l0"].asDouble(),root["profile"]["nu"].asDouble());
 	if( profile_shape == "uniform" ){
-	  profiles[j] = new UniformDisc(pixSizePhys,rhalf/0.707,incl,orient);
+	  profiles[j] = new gerlumph::UniformDisc(pixSizePhys,rhalf/0.707,incl,orient);
 	  //profiles[j] = new UniformDisc(pixSizePhys,rhalf,incl,orient);
 	} else if( profile_shape == "gaussian" ){
-	  profiles[j] = new Gaussian(pixSizePhys,rhalf/1.18,incl,orient);
+	  profiles[j] = new gerlumph::Gaussian(pixSizePhys,rhalf/1.18,incl,orient);
 	  //profiles[j] = new Gaussian(pixSizePhys,rhalf,incl,orient);
 	}
       }
@@ -170,24 +170,24 @@ std::vector<BaseProfile*> createProfilesFromInput(const std::string filename,dou
 	double a = pow(l,4.0);
 	double rhalf = 0.0097*pow(a*b*c,1.0/3.0); // in [10^14 cm]
 	if( profile_shape == "uniform" ){
-	  profiles[j] = new UniformDisc(pixSizePhys,rhalf/0.707,incl,orient);
+	  profiles[j] = new gerlumph::UniformDisc(pixSizePhys,rhalf/0.707,incl,orient);
 	} else if( profile_shape == "gaussian" ){
-	  profiles[j] = new Gaussian(pixSizePhys,rhalf/1.18,incl,orient);
+	  profiles[j] = new gerlumph::Gaussian(pixSizePhys,rhalf/1.18,incl,orient);
 	}
       }
     }
   } else {
-    factoryProfilePars custom_pars;
-    custom_pars.type   = profile_type;
-    custom_pars.shape  = profile_shape;
-    custom_pars.incl   = incl;
-    custom_pars.orient = orient;
-    custom_pars.pixSizePhys = pixSizePhys;
+    std::map<std::string,std::string> custom_pars;
+    custom_pars["type"]   = profile_type;
+    custom_pars["shape"]  = profile_shape;
+    custom_pars["incl"]   = std::to_string(incl);
+    custom_pars["orient"] = std::to_string(orient);
+    custom_pars["pixSizePhys"] = std::to_string(pixSizePhys);
     for(int j=0;j<lrest.size();j++){
-      custom_pars.lrest = lrest[j].asDouble();
-      custom_pars.filename = root["path_2_custom"].asString() + root["filters"][j].asString() + ".fits";
-      custom_pars.profPixSizePhys = root["profile"]["profPixSizePhys"][j].asDouble();
-      profiles[j] = FactoryProfile::getInstance()->createProfile(custom_pars);	
+      custom_pars["lrest"] = std::to_string(lrest[j].asDouble());
+      custom_pars["filename"] = root["path_2_custom"].asString() + root["filters"][j].asString() + ".fits";
+      custom_pars["pixSizePhys"] = std::to_string(root["profile"]["profPixSizePhys"][j].asDouble());
+      profiles[j] = gerlumph::FactoryProfile::getInstance()->createProfileFromPars(custom_pars);	
     }
   }
 
@@ -195,30 +195,31 @@ std::vector<BaseProfile*> createProfilesFromInput(const std::string filename,dou
 }
 
 
-
-std::vector<factoryProfilePars> createProfileParsFromInput(const std::string filename){
+/*
+std::vector<gerlumph::FactoryProfile> createProfileParsFromInput(const std::string filename){
   Json::Value root;
   std::ifstream fin(filename);
   fin >> root;
 
-  std::vector<factoryProfilePars> profile_pars_vector;
-  factoryProfilePars profile_pars;
-  profile_pars.type   = root["profile"]["type"].asString();
-  profile_pars.shape  = root["profile"]["shape"].asString();
-  profile_pars.incl   = root["profile"]["incl"].asDouble();
-  profile_pars.orient = root["profile"]["orient"].asDouble();
+  std::vector<gerlumph::FactoryProfile> profile_pars_vector;
+  //gerlumph::FactoryProfile profile_pars;
+  std::map<std::string,std::string> profile_pars;
+  profile_pars["type"]   = root["profile"]["type"].asString();
+  profile_pars["shape"]  = root["profile"]["shape"].asString();
+  profile_pars["incl"]   = std::to_string(root["profile"]["incl"].asDouble());
+  profile_pars["orient"] = std::to_string(root["profile"]["orient"].asDouble());
 
-  if( profile_pars.type == "parametric" ){
-    profile_pars.pars_parametric = {
-      root["profile"]["r0"].asDouble(),
-      root["profile"]["l0"].asDouble(),
-      root["profile"]["nu"].asDouble()
+  if( profile_pars["type"] == "parametric" ){
+    profile_pars["pars_parametric"] = {
+      std::to_string(root["profile"]["r0"].asDouble()),
+      std::to_string(root["profile"]["l0"].asDouble()),
+      std::to_string(root["profile"]["nu"].asDouble())
     };
-  } else if( profile_pars.type == "ssdisc" ){
-    profile_pars.pars_parametric = {
-      root["profile"]["mbh"].asDouble(),
-      root["profile"]["fedd"].asDouble(),
-      root["profile"]["eta"].asDouble()
+  } else if( profile_pars["type"] == "ssdisc" ){
+    profile_pars["pars_parametric"] = {
+      std::to_string(root["profile"]["mbh"].asDouble()),
+      std::to_string(root["profile"]["fedd"].asDouble()),
+      std::to_string(root["profile"]["eta"].asDouble())
     };
   }
 
@@ -234,19 +235,19 @@ std::vector<factoryProfilePars> createProfileParsFromInput(const std::string fil
     
   return profile_pars_vector;
 }
+*/
 
-
-void writeUncompressedData(std::string path,lsstParameters lsst,LightCurveCollection& mother,const std::vector<LightCurveCollection>& full,const std::vector<LightCurveCollection>& sampled){
+void writeUncompressedData(std::string path,lsstParameters lsst,gerlumph::LightCurveCollection& mother,const std::vector<gerlumph::LightCurveCollection>& full,const std::vector<gerlumph::LightCurveCollection>& sampled){
   // Write sampled curves
   for(int j=0;j<lsst.Nfilters;j++){
-    LightCurveCollection sample;
+    gerlumph::LightCurveCollection sample;
     sample.Ncurves = mother.Ncurves;
-    sample.lightCurves = new LightCurve*[sample.Ncurves];
-    sample.A = (point*) malloc(sample.Ncurves*sizeof(point)); // just because the destructor complains when there is no pointer to A or B to delete
-    sample.B = (point*) malloc(sample.Ncurves*sizeof(point));
+    sample.lightCurves = new gerlumph::LightCurve*[sample.Ncurves];
+    sample.A = (gerlumph::point*) malloc(sample.Ncurves*sizeof(gerlumph::point)); // just because the destructor complains when there is no pointer to A or B to delete
+    sample.B = (gerlumph::point*) malloc(sample.Ncurves*sizeof(gerlumph::point));
     for(int i=0;i<mother.Ncurves;i++){
       int Nsamples = sampled[j].lightCurves[i]->Nsamples;
-      sample.lightCurves[i] = new LightCurve(Nsamples);
+      sample.lightCurves[i] = new gerlumph::LightCurve(Nsamples);
       for(int k=0;k<Nsamples;k++){
 	sample.lightCurves[i]->t[k]  = lsst.tmin + sampled[j].lightCurves[i]->t[k];
 	sample.lightCurves[i]->m[k]  = lsst.errbase[j] - 2.5*log10(sampled[j].lightCurves[i]->m[k]);
@@ -271,15 +272,15 @@ void writeUncompressedData(std::string path,lsstParameters lsst,LightCurveCollec
   }
 }
 
-void writeCompressedData(std::string path,lsstParameters lsst,LightCurveCollection& mother,const std::vector<LightCurveCollection>& full,const std::vector<LightCurveCollection>& sampled){
+void writeCompressedData(std::string path,lsstParameters lsst,gerlumph::LightCurveCollection& mother,const std::vector<gerlumph::LightCurveCollection>& full,const std::vector<gerlumph::LightCurveCollection>& sampled){
   std::cout << "creating collection with all filters per light curve" << std::endl;
   std::vector<int> Nfull(mother.Ncurves);
-  LightCurveCollection all_filters_full = mother;
+  gerlumph::LightCurveCollection all_filters_full = mother;
   for(int i=0;i<mother.Ncurves;i++){
     Nfull[i] = full[0].lightCurves[i]->Nsamples;
     int Ntot = Nfull[i]*lsst.Nfilters;
     
-    all_filters_full.lightCurves[i] = new LightCurve(Ntot);
+    all_filters_full.lightCurves[i] = new gerlumph::LightCurve(Ntot);
     int start = 0;
     for(int j=0;j<lsst.Nfilters;j++){
       //      for(int k=start;k<Ntot;k++){
@@ -311,10 +312,10 @@ void writeCompressedData(std::string path,lsstParameters lsst,LightCurveCollecti
     Nf[j] = lsst.times[j].size();
   }
   int Ntot = std::accumulate(Nf.begin(),Nf.end(),0);
-  LightCurveCollection all_filters_sampled = mother;
+  gerlumph::LightCurveCollection all_filters_sampled = mother;
   for(int i=0;i<mother.Ncurves;i++){
     //    std::cout << " >>>>>>>>>>>>>> " << i << std::endl;
-    all_filters_sampled.lightCurves[i] = new LightCurve(Ntot);
+    all_filters_sampled.lightCurves[i] = new gerlumph::LightCurve(Ntot);
     int start = 0;
     for(int j=0;j<lsst.Nfilters;j++){
       //      std::cout << " >>>>>>>>>>>>>> filter " << j << std::endl;
@@ -356,7 +357,7 @@ void writeCompressedData(std::string path,lsstParameters lsst,LightCurveCollecti
 
 }
 
-void writeUncompressedDataNew(std::string path,lsstParameters lsst,LightCurveCollection& mother,const std::vector<LightCurveCollection>& full,const std::vector<LightCurveCollection>& sampled){
+void writeUncompressedDataNew(std::string path,lsstParameters lsst,gerlumph::LightCurveCollection& mother,const std::vector<gerlumph::LightCurveCollection>& full,const std::vector<gerlumph::LightCurveCollection>& sampled){
 
   // Write sampled curves
   for(int j=0;j<lsst.Nfilters;j++){

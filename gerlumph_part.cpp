@@ -5,7 +5,7 @@
 #include <numeric>
 #include <fstream>
 
-#include "json/json.h"
+#include "jsoncpp/json/json.h"
 
 #include "gerlumph.hpp"
 #include "auxiliary_functions.hpp"
@@ -28,14 +28,14 @@ int main(int argc,char* argv[]){
   std::cout << "gen ok" << std::endl;
 
   // Set the 6 LSST filter profiles
-  std::vector<factoryProfilePars> profile_pars = createProfileParsFromInput(json_input_filename);
+  //std::vector<gerlumph::FactoryProfile> profile_pars = createProfileParsFromInput(json_input_filename);
   std::vector<double> rhalfs = calculateRhalf(json_input_filename);
   std::cout << "profile ok" << std::endl;
 
 
   // Set the velocities
   velocityParameters vp(json_input_filename);
-  velocityComponents vel(gen.Nlc);
+  gerlumph::velocityComponents vel(gen.Nlc);
   vel.createVelocitiesK04(321,vp.ra,vp.dec,vp.sigma_l,vp.sigma_s,vp.sigma_disp,vp.epsilon,vp.zl,vp.zs,vp.Dl,vp.Ds,vp.Dls);
   std::vector<double> vtot(gen.Nlc);
   std::vector<double> phi_vtot(gen.Nlc);
@@ -52,7 +52,7 @@ int main(int argc,char* argv[]){
   for(int ii=0;ii<gen.ids.size();ii++){
     double Rein = 13.5*sqrt(gen.mass[ii]*vp.Dls*vp.Ds/vp.Dl); // in 10^14 cm
     std::cout << "Rein is: " << Rein << " x10^14 cm" << std::endl;
-    MagnificationMap map(gen.ids[ii],Rein);
+    gerlumph::MagnificationMap map(gen.ids[ii],Rein);
 
     // Profile loop: I need to define pixSizePhys (map dependent) for each profile before creating it
     //std::vector<BaseProfile*> profiles(lsst.Nfilters);
@@ -60,14 +60,14 @@ int main(int argc,char* argv[]){
     //  profile_pars[j].pixSizePhys = map.pixSizePhys;
     //  profiles[j] = FactoryProfile::getInstance()->createProfile(profile_pars[j]);
     //}
-    std::vector<BaseProfile*> profiles = createProfilesFromInput(json_input_filename,map.pixSizePhys);
+    std::vector<gerlumph::BaseProfile*> profiles = createProfilesFromInput(json_input_filename,map.pixSizePhys);
 
 
     // set convolution kernel
     int profMaxOffset = (int) ceil(profiles[lsst.Nfilters-1]->Nx/2);
     //    int profMaxOffset = 1000;
-    EffectiveMap emap(profMaxOffset,&map);
-    Kernel kernel(map.Nx,map.Ny);
+    gerlumph::EffectiveMap emap(profMaxOffset,&map);
+    gerlumph::Kernel kernel(map.Nx,map.Ny);
 
 
     // Rotate map (i.e. rotate the velocity vectors in an opposite way)
@@ -79,7 +79,7 @@ int main(int argc,char* argv[]){
 
     // Set light curves
     std::cout << "setting light curves" << std::endl;
-    LightCurveCollection mother(gen.Nlc,&emap);
+    gerlumph::LightCurveCollection mother(gen.Nlc,&emap);
     mother.createVelocityLocations(213,lsst.tmax,vtot,phi_vtot);
 
     //mother.createRandomLocations(213,1000);
@@ -90,12 +90,12 @@ int main(int argc,char* argv[]){
 
 
     // Convolution and extraction loop
-    std::vector<LightCurveCollection> all_filters_full_raw;
-    std::vector<LightCurveCollection> all_filters_sampled_raw;
+    std::vector<gerlumph::LightCurveCollection> all_filters_full_raw;
+    std::vector<gerlumph::LightCurveCollection> all_filters_sampled_raw;
     for(int j=0;j<lsst.Nfilters;j++){
-      LightCurveCollection dum_full = mother;
+      gerlumph::LightCurveCollection dum_full = mother;
       all_filters_full_raw.push_back(dum_full);
-      LightCurveCollection dum_sampled = mother;
+      gerlumph::LightCurveCollection dum_sampled = mother;
       all_filters_sampled_raw.push_back(dum_sampled);
     }
 
@@ -137,7 +137,7 @@ int main(int argc,char* argv[]){
     out["time0"]       = lsst.tmin; // in MJD
     out["duration"]    = lsst.tmax; // in days
     out["offset"]      = profMaxOffset; // in pixels
-    out["profile_type"] = profile_pars[0].type;
+    //out["profile_type"] = profile_pars['type'];//.type;
     Json::Value sizes = Json::Value(Json::arrayValue);
     for(int j=0;j<lsst.Nfilters;j++){
       sizes.append(rhalfs[j]);
