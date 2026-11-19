@@ -2,7 +2,7 @@
 
 #include <fstream>
 #include <cmath>
-#include "jsoncpp/json/json.h"
+#include "json/json.h"
 
 lsstParameters::lsstParameters(const std::string filename){
   Json::Value root;
@@ -187,7 +187,7 @@ std::vector<gerlumph::BaseProfile*> createProfilesFromInput(const std::string fi
       custom_pars["lrest"] = std::to_string(lrest[j].asDouble());
       custom_pars["filename"] = root["path_2_custom"].asString() + root["filters"][j].asString() + ".fits";
       custom_pars["pixSizePhys"] = std::to_string(root["profile"]["profPixSizePhys"][j].asDouble());
-      profiles[j] = gerlumph::FactoryProfile::getInstance()->createProfileFromPars(custom_pars);	
+      profiles[j] = gerlumph::FactoryProfile::getInstance()->createProfileFromPars(custom_pars);
     }
   }
 

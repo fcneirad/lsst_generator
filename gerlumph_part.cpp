@@ -5,7 +5,7 @@
 #include <numeric>
 #include <fstream>
 
-#include "jsoncpp/json/json.h"
+#include "json/json.h"
 
 #include "gerlumph.hpp"
 #include "auxiliary_functions.hpp"
