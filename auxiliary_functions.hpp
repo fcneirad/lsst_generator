@@ -7,13 +7,13 @@
 
 class lsstParameters {
 public:
-  int Nfilters = 6;
+  int Nfilters = 1;
   std::vector< std::vector<double> > times;
   std::vector< std::vector<double> > depths;
   std::vector<std::string> filters;
   double tmin;
   double tmax;
-  double errbase[6];
+  double errbase[1];
 
   lsstParameters(const std::string filename);
 };

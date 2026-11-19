@@ -34,9 +34,16 @@ int main(int argc,char* argv[]){
 
 
   // Set the velocities
+  //-------------For Kochanek 2004 velocity model---------------------
+  //velocityParameters vp(json_input_filename);
+  //velocityComponents vel(gen.Nlc);
+  //vel.createVelocitiesK04(321,vp.ra,vp.dec,vp.sigma_l,vp.sigma_s,vp.sigma_disp,vp.epsilon,vp.zl,vp.zs,vp.Dl,vp.Ds,vp.Dls);
+  //-------------For Kochanek 2004 velocity model---------------------
+  //-------------For uniform velocity model---------------------------
   velocityParameters vp(json_input_filename);
-  velocityComponents vel(gen.Nlc);
-  vel.createVelocitiesK04(321,vp.ra,vp.dec,vp.sigma_l,vp.sigma_s,vp.sigma_disp,vp.epsilon,vp.zl,vp.zs,vp.Dl,vp.Ds,vp.Dls);
+  velocityEffective vel(gen.Nlc);
+  vel.createUniform(321, 10, 1000);
+  //-------------For uniform velocity model---------------------------
   std::vector<double> vtot(gen.Nlc);
   std::vector<double> phi_vtot(gen.Nlc);
   for(int i=0;i<gen.Nlc;i++){
@@ -62,9 +69,9 @@ int main(int argc,char* argv[]){
     //}
     std::vector<BaseProfile*> profiles = createProfilesFromInput(json_input_filename,map.pixSizePhys);
 
-
     // set convolution kernel
     int profMaxOffset = (int) ceil(profiles[lsst.Nfilters-1]->Nx/2);
+    std::cout << "profMaxOffset is: " << profMaxOffset << std::endl;
     //    int profMaxOffset = 1000;
     EffectiveMap emap(profMaxOffset,&map);
     Kernel kernel(map.Nx,map.Ny);
@@ -118,7 +125,8 @@ int main(int argc,char* argv[]){
 
     // Write velocities
     if( gen.velocities ){
-      vel.writeVelocities(gen.path_2_output+"velocities.dat");
+      //vel.writeVelocities(gen.path_2_output+"velocities.dat");
+      vel.writeUniform(gen.path_2_output+"velocities.dat");
     }
 
     // Writing start and end points of each light curve on the magnification map
