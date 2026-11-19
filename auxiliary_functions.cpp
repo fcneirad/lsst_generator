@@ -186,8 +186,10 @@ std::vector<BaseProfile*> createProfilesFromInput(const std::string filename,dou
     for(int j=0;j<lrest.size();j++){
       custom_pars.lrest = lrest[j].asDouble();
       custom_pars.filename = root["path_2_custom"].asString() + root["filters"][j].asString() + ".fits";
+      //std::cout << custom_pars.filename << std::endl;
       custom_pars.profPixSizePhys = root["profile"]["profPixSizePhys"][j].asDouble();
-      profiles[j] = FactoryProfile::getInstance()->createProfile(custom_pars);	
+      profiles[j] = FactoryProfile::getInstance()->createProfile(custom_pars);
+      //std::cout << "asdasdasd " << profiles[j]->data[0] << std::endl;	
     }
   }
 
