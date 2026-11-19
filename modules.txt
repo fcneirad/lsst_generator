@@ -1,0 +1,1 @@
+module load cfitsio/4.2.0 gcc/10.3.0 gcccore/11.3.0 jsoncpp/1.9.5 cuda/11.7.0 cfitsio/4.2.0

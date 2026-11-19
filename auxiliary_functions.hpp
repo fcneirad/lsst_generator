@@ -24,6 +24,7 @@ public:
   std::vector<double> mass;
   std::vector<double> gamma_angle;
   std::vector<double> lrest;    // in [nm]
+  std::vector<std::string> sizes;
   double Rein;
   int Nlc;
   int seed;

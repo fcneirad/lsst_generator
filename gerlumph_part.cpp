@@ -62,9 +62,9 @@ int main(int argc,char* argv[]){
     //}
     std::vector<BaseProfile*> profiles = createProfilesFromInput(json_input_filename,map.pixSizePhys);
 
-
     // set convolution kernel
     int profMaxOffset = (int) ceil(profiles[lsst.Nfilters-1]->Nx/2);
+    std::cout << "profMaxOffset is: " << profMaxOffset << std::endl;
     //    int profMaxOffset = 1000;
     EffectiveMap emap(profMaxOffset,&map);
     Kernel kernel(map.Nx,map.Ny);

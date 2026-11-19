@@ -68,6 +68,11 @@ genericParameters::genericParameters(const std::string filename){
   for(int j=0;j<lrest.size();j++){
     this->lrest.push_back( lrest[j].asDouble() );
   }
+
+  Json::Value sizes = root["sizes"];
+  for(int j=0;j<sizes.size();j++){
+    this->sizes.push_back( sizes[j].asString() );
+  }
   
   this->Nlc           = root["output"]["numlc"].asInt();
   this->seed          = root["output"]["seed"].asInt();
@@ -158,6 +163,7 @@ std::vector<BaseProfile*> createProfilesFromInput(const std::string filename,dou
 	  profiles[j] = new UniformDisc(pixSizePhys,rhalf/0.707,incl,orient);
 	  //profiles[j] = new UniformDisc(pixSizePhys,rhalf,incl,orient);
 	} else if( profile_shape == "gaussian" ){
+	  //std::cout << pixSizePhys << " " << rhalf << std::endl;
 	  profiles[j] = new Gaussian(pixSizePhys,rhalf/1.18,incl,orient);
 	  //profiles[j] = new Gaussian(pixSizePhys,rhalf,incl,orient);
 	}
@@ -186,8 +192,10 @@ std::vector<BaseProfile*> createProfilesFromInput(const std::string filename,dou
     for(int j=0;j<lrest.size();j++){
       custom_pars.lrest = lrest[j].asDouble();
       custom_pars.filename = root["path_2_custom"].asString() + root["filters"][j].asString() + ".fits";
+      //std::cout << custom_pars.filename << std::endl;
       custom_pars.profPixSizePhys = root["profile"]["profPixSizePhys"][j].asDouble();
-      profiles[j] = FactoryProfile::getInstance()->createProfile(custom_pars);	
+      profiles[j] = FactoryProfile::getInstance()->createProfile(custom_pars);
+      //std::cout << "asdasdasd " << profiles[j]->data[0] << std::endl;	
     }
   }
 

@@ -1,3 +1,6 @@
 *.pdf
 *.pyc
 gerlumph_part
+convolve_map
+micro_mag_hist
+micro_mag_hist_pixel
